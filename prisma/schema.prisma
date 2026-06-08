@@ -1,0 +1,187 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         String        // "STUDENT", "STAFF", "ADMIN"
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  student      Student?
+  staff        Staff?
+  notifications Notification[]
+}
+
+model Student {
+  id            String        @id @default(uuid())
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loyaltyPoints Int           @default(0)
+  qrEntryToken  String?       
+  
+  orders        Order[]
+  favorites     Favorite[]
+  reviews       Review[]
+  subscriptions Subscription[]
+}
+
+model Staff {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isAvailable Boolean  @default(true)
+}
+
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique
+  foods Food[]
+}
+
+model Food {
+  id              String      @id @default(uuid())
+  name            String
+  description     String
+  price           Float
+  imageUrl        String
+  preparationTime Int         // in minutes
+  isAvailable     Boolean     @default(true)
+  categoryId      String
+  category        Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  orderItems      OrderItem[]
+  favorites       Favorite[]
+  reviews         Review[]
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  tokenNumber       Int         
+  status            String      // "PENDING", "PREPARING", "READY", "DELIVERED", "CANCELLED"
+  totalAmount       Float
+  paymentStatus     String      // "PENDING", "PAID", "FAILED"
+  paymentMethod     String      // "CASH", "ONLINE"
+  estimatedWaitTime Int         // in minutes
+  studentId         String
+  student           Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  orderItems        OrderItem[]
+  queueItems        Queue[]
+  payments          Payment[]
+}
+
+model OrderItem {
+  id       String @id @default(uuid())
+  orderId  String
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  foodId   String
+  food     Food   @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  quantity Int
+  price    Float  
+}
+
+model Queue {
+  id            String   @id @default(uuid())
+  orderId       String   @unique
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  queuePosition Int
+  priorityScore Float    @default(0.0)
+  createdAt     DateTime @default(now())
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount         Float
+  transactionId  String   @unique
+  status         String   // "PENDING", "SUCCESS", "FAILED"
+  convenienceFee Float    @default(1.0) 
+  createdAt      DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  foodId    String
+  food      Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, foodId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  foodId    String
+  food      Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  rating    Int      
+  comment   String
+  createdAt DateTime @default(now())
+}
+
+model LoyaltyPoint {
+  id        String   @id @default(uuid())
+  studentId String
+  points    Int
+  reason    String
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id             String    @id @default(uuid())
+  code           String    @unique
+  discountPercent Int
+  expiresAt      DateTime
+}
+
+model AnalyticsData {
+  id        String   @id @default(uuid())
+  key       String   
+  value     String
+  date      DateTime @default(now())
+}
+
+model Subscription {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  planName    String   // e.g., "Monthly Basic", "Premium"
+  startDate   DateTime @default(now())
+  endDate     DateTime
+  status      String   // "ACTIVE", "EXPIRED", "CANCELLED"
+  price       Float
+  createdAt   DateTime @default(now())
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  eventDate   DateTime
+  imageUrl    String?
+  location    String?
+  createdAt   DateTime @default(now())
+}
