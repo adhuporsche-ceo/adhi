@@ -1,13 +1,11 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { completePaymentAction } from '@/app/actions/orders';
 import { AlertCircle, ShieldCheck, Smartphone } from 'lucide-react';
 
-export default function GPayGatewayPage() {
+function GPayGatewayContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
@@ -102,7 +100,7 @@ export default function GPayGatewayPage() {
         <div className="space-y-3">
           <a
             href={`upi://pay?pa=merchant@upi&pn=KORE%20Canteen&am=${amount.toFixed(2)}&tr=${orderId}&cu=INR`}
-            className="w-full py-4 rounded-2xl text-base font-bold text-zinc-900 bg-white border-2 border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 shadow-sm transition-all active:scale-[0.99] flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl text-base font-bold text-zinc-900 bg-white border-2 border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 shadow-sm transition-all active:scale-[0.99] flex items-center justify-center gap-3"
           >
             <Smartphone className="h-5 w-5 text-zinc-600" />
             Open GPay App Directly
@@ -120,7 +118,7 @@ export default function GPayGatewayPage() {
           <button
             onClick={handlePayment}
             disabled={isPaying}
-            className="w-full py-4 rounded-2xl text-base font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/10 transition-all active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl text-base font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/10 transition-all active:scale-[0.99] disabled:opacity-50 flex items-center justify-center"
           >
             {isPaying ? (
               <span className="animate-pulse">Authorizing GPay PIN...</span>
@@ -138,5 +136,20 @@ export default function GPayGatewayPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function GPayGatewayPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-zinc-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-zinc-600">Loading payment gateway...</p>
+        </div>
+      </div>
+    }>
+      <GPayGatewayContent />
+    </Suspense>
   );
 }
