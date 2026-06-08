@@ -40,5 +40,12 @@
     "prisma": "^5.22.0",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "scripts": {
+  "dev": "next dev",
+  "build": "prisma generate && next build",
+  "start": "next start",
+  "lint": "eslint",
+  "postinstall": "prisma generate"
+}
 }
